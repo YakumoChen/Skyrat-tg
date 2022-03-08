@@ -55,10 +55,10 @@
 /obj/machinery/door/add_context(atom/source, list/context, obj/item/held_item, mob/user)
 	. = ..()
 
-	if(!isliving(user))
+	if(isaicamera(user) || issilicon(user))
 		return .
 
-	if (isnull(held_item))
+	if (isnull(held_item) && Adjacent(user))
 		context[SCREENTIP_CONTEXT_LMB] = "Open"
 		return CONTEXTUAL_SCREENTIP_SET
 
@@ -227,8 +227,8 @@
 		return TRUE
 	return ..()
 
-/obj/machinery/door/proc/unrestricted_side(mob/M) //Allows for specific side of airlocks to be unrestrected (IE, can exit maint freely, but need access to enter)
-	return get_dir(src, M) & unres_sides
+/obj/machinery/door/proc/unrestricted_side(mob/opener) //Allows for specific side of airlocks to be unrestrected (IE, can exit maint freely, but need access to enter)
+	return get_dir(src, opener) & unres_sides
 
 /obj/machinery/door/proc/try_to_weld(obj/item/weldingtool/W, mob/user)
 	return
