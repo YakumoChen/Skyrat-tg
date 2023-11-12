@@ -33,15 +33,15 @@
 	limb_id = SPECIES_SNAIL
 	unarmed_damage_high = 0.5
 	burn_modifier = 2
-	// speed_modifier = 3 //disgustingly slow // SKYRAT EDIT REMOVAL - Moved the movespeed to the shell.
 	biological_state = (BIO_FLESH|BIO_BLOODED)
+	speed_modifier = 2 //disgustingly slow //SKYRAT EDIT - Moves some slowdown to the shell
 
 /obj/item/bodypart/leg/right/snail
 	limb_id = SPECIES_SNAIL
 	unarmed_damage_high = 0.5
 	burn_modifier = 2
-	// speed_modifier = 3 //disgustingly slow // SKYRAT EDIT REMOVAL - Moved the movespeed to the shell.
 	biological_state = (BIO_FLESH|BIO_BLOODED)
+	speed_modifier = 2 //disgustingly slow //SKYRAT EDIT - Moves some slowdown to the shell
 
 ///ABDUCTOR
 /obj/item/bodypart/head/abductor
