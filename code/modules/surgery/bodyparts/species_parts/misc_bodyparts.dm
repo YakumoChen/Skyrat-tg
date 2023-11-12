@@ -12,6 +12,7 @@
 	burn_modifier = 2
 	biological_state = (BIO_FLESH|BIO_BLOODED)
 	wing_types = NONE
+	speed_modifier = 6 //SKYRAT EDIT: Moved slowdown to chest
 
 /obj/item/bodypart/arm/left/snail
 	limb_id = SPECIES_SNAIL
@@ -34,14 +35,14 @@
 	unarmed_damage_high = 0.5
 	burn_modifier = 2
 	biological_state = (BIO_FLESH|BIO_BLOODED)
-	speed_modifier = 2 //disgustingly slow //SKYRAT EDIT - Moves some slowdown to the shell
+	//speed_modifier = 3 //disgustingly slow //SKYRAT EDIT - Moves some slowdown to the chest
 
 /obj/item/bodypart/leg/right/snail
 	limb_id = SPECIES_SNAIL
 	unarmed_damage_high = 0.5
 	burn_modifier = 2
 	biological_state = (BIO_FLESH|BIO_BLOODED)
-	speed_modifier = 2 //disgustingly slow //SKYRAT EDIT - Moves some slowdown to the shell
+	//speed_modifier = 3 //disgustingly slow //SKYRAT EDIT - Moves some slowdown to the chest
 
 ///ABDUCTOR
 /obj/item/bodypart/head/abductor
