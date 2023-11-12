@@ -140,12 +140,12 @@
 
 	var/mutable_appearance/eye_left = mutable_appearance(eye_icon, "[eye_icon_state]_l", -eyes_layer) // SKYRAT EDIT CHANGE - Customization - ORIGINAL: var/mutable_appearance/eye_left = mutable_appearance('icons/mob/human/human_face.dmi', "[eye_icon_state]_l", -BODY_LAYER)
 	var/mutable_appearance/eye_right = mutable_appearance(eye_icon, "[eye_icon_state]_r", -eyes_layer) // SKYRAT EDIT CHANGE - Customization - ORIGINAL: var/mutable_appearance/eye_right = mutable_appearance('icons/mob/human/human_face.dmi', "[eye_icon_state]_r", -BODY_LAYER)
-	var/list/eye_overlays = list(eye_left, eye_right) //SKYRAT EDIT ADDITION - Add all the overlays to this list instead of adding emissive blockers/eye emissives to the eye overlays' overlays
+	var/list/overlays = list(eye_left, eye_right)
 
 	var/obscured = parent.check_obscured_slots(TRUE)
 	if(overlay_ignore_lighting && !(obscured & ITEM_SLOT_EYES))
-		eye_overlays += emissive_appearance(eye_left.icon, eye_left.icon_state, parent, -eyes_layer, alpha = eye_left.alpha) //SKYRAT EDIT CHANGE - TODO fix upstream
-		eye_overlays += emissive_appearance(eye_right.icon, eye_right.icon_state, parent, -eyes_layer, alpha = eye_right.alpha) //SKYRAT EDIT CHANGE - TODO fix upstream
+		overlays += emissive_appearance(eye_left.icon, eye_left.icon_state, parent, -eyes_layer, alpha = eye_left.alpha) // SKYRAT EDIT CHANGE - ORIGINAL: overlays += emissive_appearance(eye_left.icon, eye_left.icon_state, parent, -BODY_LAYER, alpha = eye_left.alpha)
+		overlays += emissive_appearance(eye_right.icon, eye_right.icon_state, parent, -eyes_layer, alpha = eye_right.alpha) // SKYRAT EDIT CHANGE - ORIGINAL: overlays += emissive_appearance(eye_left.icon, eye_left.icon_state, parent, -BODY_LAYER, alpha = eye_left.alpha)
 	var/obj/item/bodypart/head/my_head = parent.get_bodypart(BODY_ZONE_HEAD)
 	if(my_head)
 		if(my_head.head_flags & HEAD_EYECOLOR)
@@ -168,12 +168,12 @@
 			my_head.worn_face_offset.apply_offset(emissive_right)
 			my_head.worn_face_offset.apply_offset(emissive_left)
 
-		eye_overlays += emissive_left
-		eye_overlays += emissive_right
+		overlays += emissive_left
+		overlays += emissive_right
 
 	// SKYRAT EDIT END
 
-	return eye_overlays // SKYRAT EDIT CHANGE - return all the overlays together in a list so height gets applied correctly
+	return overlays
 
 #undef OFFSET_X
 #undef OFFSET_Y
@@ -187,7 +187,7 @@
 /obj/item/organ/internal/eyes/apply_organ_damage(damage_amount, maximum = maxHealth, required_organ_flag)
 	. = ..()
 	if(!owner)
-		return
+		return FALSE
 	apply_damaged_eye_effects()
 
 /// Applies effects to our owner based on how damaged our eyes are
@@ -318,6 +318,7 @@
 	icon_state = "cybernetic_eyeballs"
 	desc = "Your vision is augmented."
 	organ_flags = ORGAN_ROBOTIC
+	failing_desc = "seems to be broken."
 
 /obj/item/organ/internal/eyes/robotic/emp_act(severity)
 	. = ..()
@@ -388,14 +389,14 @@
 	. = ..()
 	if(!eye)
 		eye = new /obj/item/flashlight/eyelight()
-	eye.on = TRUE
+	eye.set_light_on(TRUE)
 	eye.forceMove(victim)
 	eye.update_brightness(victim)
 	victim.become_blind(FLASHLIGHT_EYES)
 
 /obj/item/organ/internal/eyes/robotic/flashlight/on_remove(mob/living/carbon/victim)
 	. = ..()
-	eye.on = FALSE
+	eye.set_light_on(FALSE)
 	eye.update_brightness(victim)
 	eye.forceMove(src)
 	victim.cure_blind(FLASHLIGHT_EYES)
@@ -445,7 +446,7 @@
 
 /obj/item/organ/internal/eyes/robotic/glow/emp_act()
 	. = ..()
-	if(!eye.on || . & EMP_PROTECT_SELF)
+	if(!eye.light_on || . & EMP_PROTECT_SELF)
 		return
 	deactivate(close_ui = TRUE)
 
@@ -546,7 +547,7 @@
  * Turns on the attached flashlight object, updates the mob overlay to be added.
  */
 /obj/item/organ/internal/eyes/robotic/glow/proc/activate()
-	eye.on = TRUE
+	eye.light_on = TRUE
 	if(eye.light_range) // at range 0 we are just going to make the eyes glow emissively, no light overlay
 		eye.set_light_on(TRUE)
 	update_mob_eye_color()
@@ -562,7 +563,6 @@
 /obj/item/organ/internal/eyes/robotic/glow/proc/deactivate(mob/living/carbon/eye_owner = owner, close_ui = FALSE)
 	if(close_ui)
 		SStgui.close_uis(src)
-	eye.on = FALSE
 	eye.set_light_on(FALSE)
 	update_mob_eye_color(eye_owner)
 
@@ -589,7 +589,7 @@
  */
 /obj/item/organ/internal/eyes/robotic/glow/proc/set_beam_range(new_range)
 	var/old_light_range = eye.light_range
-	if(old_light_range == 0 && new_range > 0 && eye.on) // turn bring back the light overlay if we were previously at 0 (aka emissive eyes only)
+	if(old_light_range == 0 && new_range > 0 && eye.light_on) // turn bring back the light overlay if we were previously at 0 (aka emissive eyes only)
 		eye.light_on = FALSE // this is stupid, but this has to be FALSE for set_light_on() to work.
 		eye.set_light_on(TRUE)
 	eye.set_light_range(clamp(new_range, 0, max_light_beam_distance))
@@ -624,7 +624,7 @@
  * Toggle the attached flashlight object on or off
  */
 /obj/item/organ/internal/eyes/robotic/glow/proc/toggle_active()
-	if(eye.on)
+	if(eye.light_on)
 		deactivate()
 	else
 		activate()
@@ -656,8 +656,8 @@
 
 	if(QDELETED(eye_owner) || !ishuman(eye_owner)) //Other carbon mobs don't have eye color.
 		return
-	
-	if(!eye.on)
+
+	if(!eye.light_on)
 		eye_icon_state = initial(eye_icon_state)
 		overlay_ignore_lighting = FALSE
 	else
@@ -753,7 +753,7 @@
 	//add lighting
 	if(!adapt_light)
 		adapt_light = new /obj/item/flashlight/eyelight/adapted()
-	adapt_light.on = TRUE
+	adapt_light.set_light_on(TRUE)
 	adapt_light.forceMove(eye_owner)
 	adapt_light.update_brightness(eye_owner)
 	ADD_TRAIT(eye_owner, TRAIT_UNNATURAL_RED_GLOWY_EYES, ORGAN_TRAIT)
@@ -769,7 +769,7 @@
 
 /obj/item/organ/internal/eyes/night_vision/maintenance_adapted/Remove(mob/living/carbon/unadapted, special = FALSE)
 	//remove lighting
-	adapt_light.on = FALSE
+	adapt_light.set_light_on(FALSE)
 	adapt_light.update_brightness(unadapted)
 	adapt_light.forceMove(src)
 	REMOVE_TRAIT(unadapted, TRAIT_UNNATURAL_RED_GLOWY_EYES, ORGAN_TRAIT)
